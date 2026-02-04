@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean",
+            "type": "shell",
+            "group": "build",
+            "command": "make clean",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {
+                    "color": "#8bdeff",
+                    "label": "$(clear-all) Clean",
+                    "detail": "Clear All"
+                }
+            }
+        },        
+        {
+            "label": "Build",
+            "type": "shell",
+            "group": "build",
+            "command": "make",
+            "problemMatcher": [],
+            "options": {
+                "statusbar": {
+                    "color": "#ff8b8b",
+                    "label": "$(code) Build",
+                    "detail": "Build Project"
+                }
+            }
+        },
+        {
+            "label": "Flash firmware",
+            "type": "shell",
+            "command": "make prog",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {
+                    "color": "#8bff97",
+                    "label": "$(gear) Flash",
+                    "detail": "Flash FW"
+                }
+            }
+        }
+    ]
+}

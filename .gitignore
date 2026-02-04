@@ -1,9 +1,3 @@
-    DSP/
-    Templates/
-    Examples/
-    NN/
-    /build/
-    *.log
-    *.d
-    .mxproject
-    *.ioc
+build/
+temp/
+.mxproject

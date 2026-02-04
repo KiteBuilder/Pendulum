@@ -1,0 +1,67 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "STM32-cppdbg",
+            "type": "cppdbg",
+            "cwd": "${workspaceRoot}",
+            "program": "${workspaceRoot}/build/Pendulum.elf",
+            "request": "launch",
+            "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "useExtendedRemote": true,
+            "setupCommands": [
+                {
+                    "text": "set output-radix 16"
+                },
+            ],
+        },
+        {
+            "name": "STM32-attach",
+            "type": "cortex-debug",
+            "request": "attach",
+            "cwd": "${workspaceRoot}",
+            "servertype": "openocd",
+            "executable": "${workspaceRoot}/build/Pendulum.elf",
+            "gdbPath": "arm-none-eabi-gdb",
+            //"svdFile": "${workspaceRoot}/Docs/STM32F4x.svd",
+            "configFiles": [
+                "interface/stlink-v2.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "showDevDebugOutput": "none",
+        },
+        {
+            "name": "STM32-launch",
+            "type": "cortex-debug",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "servertype": "openocd",
+            "executable": "${workspaceRoot}/build/Pendulum.elf",
+            "gdbPath": "arm-none-eabi-gdb",
+            "preLaunchTask": "Build",
+            "runToEntryPoint": "main",
+            //"svdFile": "${workspaceRoot}/Docs/STM32F4x.svd",
+            "configFiles": [
+                "interface/stlink-v2.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "showDevDebugOutput": "none",
+            "swoConfig": {
+                "enabled": true,
+                "swoFrequency": 2000000,
+                "cpuFrequency": 250000000,
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
+        }        
+    ]
+}
