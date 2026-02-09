@@ -16,6 +16,7 @@ typedef enum
 #ifdef DEBUG_ENABLED
     TASK_DEBUG,
 #endif
+    TASK_KEY,
     TASK_COUNT //amount of tasks
 } taskId_e;
 

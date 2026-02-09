@@ -16,6 +16,7 @@
 #include "Kalman.h"
 #include "Dshot.h"
 #include "Power.h"
+#include "Key.h"
 
 using namespace std;
 
@@ -66,20 +67,25 @@ Power power(&hadc1);
     uint8_t rxByte;
 #endif
 
-void update_lcd_display(void);
-void update_gyro(void);
-void kalman_setup(void);
-void kalman_loop(timeDelta_t dT);
+Key start_stop_key;
+static void StartStop_Key_Handler(key_state_e);
+bool f_start = false;
 
-void motors_arm(void);
-void motors_disarm(void);
+static void update_lcd_display(void);
+static void update_gyro(void);
+static void kalman_setup(void);
+static void kalman_loop(timeDelta_t dT);
 
-void taskSTROBE(timeUs_t);
-void taskGYRO(timeUs_t);
-void taskPID(timeUs_t);
-void taskDISPLAY(timeUs_t);
-void taskPOWER(timeUs_t);
-void taskDEBUG(timeUs_t);
+static void motors_arm(void);
+static void motors_disarm(void);
+
+static void taskSTROBE(timeUs_t);
+static void taskGYRO(timeUs_t);
+static void taskPID(timeUs_t);
+static void taskDISPLAY(timeUs_t);
+static void taskPOWER(timeUs_t);
+static void taskDEBUG(timeUs_t);
+static void taskKEY(timeUs_t);
 
 //Task array, consists of all scheduled tasks
 task_t tasks[TASK_COUNT] = {
@@ -122,8 +128,14 @@ task_t tasks[TASK_COUNT] = {
                 .taskHandler = taskDEBUG,
                 .taskPeriod = TASK_PERIOD_HZ(50), //50Hz, 20ms
                 .taskEnabled = false,
-        }
+        },
 #endif
+        [TASK_KEY] = {
+                .name = "KEY_POLLING",
+                .taskHandler = taskKEY,
+                .taskPeriod = TASK_PERIOD_MS(10), //10 milliseconds, 100Hz
+                .taskEnabled = false,
+        }, 
 };
 
 TasksQueue taskQueue(tasks, TASK_COUNT);
@@ -152,6 +164,8 @@ void initialization(void)
     taskQueue.taskEnable(TASK_DEBUG);
 #endif
 
+    start_stop_key.Key_Init(GPIOA  , GPIO_PIN_0  , LO_LEVEL, &StartStop_Key_Handler);
+
     p_i2c_display->ssd1306_Init();
 
     p_i2c_mpu6050->mpu6050_Init(GYRO_LPF_TYPE, GYRO_RATE_HZ, GYRO_SCALE, ACC_SCALE);
@@ -176,7 +190,7 @@ void exec(void)
   * @param
   * @retval
   */
-void taskSTROBE(timeUs_t currentTimeUs)
+static void taskSTROBE(timeUs_t currentTimeUs)
 {
     static uint32_t strbCnt = 0;
 
@@ -204,7 +218,7 @@ void taskSTROBE(timeUs_t currentTimeUs)
   * @param
   * @retval
   */
-void taskGYRO(timeUs_t currentTimeUs)
+static void taskGYRO(timeUs_t currentTimeUs)
 {
     update_gyro();
 
@@ -222,7 +236,7 @@ void taskGYRO(timeUs_t currentTimeUs)
   * @param
   * @retval
   */
-void taskPID(timeUs_t currentTimeUs)
+static void taskPID(timeUs_t currentTimeUs)
 {
     timeDelta_t dT = currentTimeUs - previousTimeUs;
     previousTimeUs = currentTimeUs;    
@@ -247,8 +261,16 @@ void taskPID(timeUs_t currentTimeUs)
     else
     {
         //TODO 
-        motorLeft.SendThrottle(throttle_left, false);
-        motorRight.SendThrottle(throttle_right, false);
+        if (f_start)
+        {
+            motorLeft.SendThrottle(throttle_left, false);
+            motorRight.SendThrottle(throttle_right, false);
+        }
+        else
+        {
+            motorLeft.SendThrottle(0, false);
+            motorRight.SendThrottle(0, false);
+        }
     }
 }
 
@@ -257,7 +279,7 @@ void taskPID(timeUs_t currentTimeUs)
   * @param
   * @retval
   */
-void taskDISPLAY(timeUs_t currentTimeUs)
+static void taskDISPLAY(timeUs_t currentTimeUs)
 {
     update_lcd_display();
 }
@@ -267,7 +289,7 @@ void taskDISPLAY(timeUs_t currentTimeUs)
   * @param
   * @retval
   */
-void taskPOWER(timeUs_t currentTimeUs)
+static void taskPOWER(timeUs_t currentTimeUs)
 {
     power.StartADC(currentTimeUs);
 }
@@ -306,7 +328,7 @@ bool f_RxReady = false;
   * @param
   * @retval
   */
-void taskDEBUG(timeUs_t currentTimeUs)
+static void taskDEBUG(timeUs_t currentTimeUs)
 {
     UNUSED(currentTimeUs);
 
@@ -363,6 +385,16 @@ void taskDEBUG(timeUs_t currentTimeUs)
 }
 
 /**
+  * @brief 
+  * @param
+  * @retval
+  */
+static void taskKEY(timeUs_t currentTimeUs)
+{
+    start_stop_key.Key_CheckState();
+}
+
+/**
   * @brief
   * @param
   * @retval
@@ -396,7 +428,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   * @param None
   * @retval None
   */
-void update_lcd_display(void)
+static void update_lcd_display(void)
 {
     char str_buff[256];
     float tempC;    
@@ -438,7 +470,7 @@ void update_lcd_display(void)
   * @param None
   * @retval None
   */
-void update_gyro(void)
+static void update_gyro(void)
 {
     p_i2c_mpu6050->mpu6050_ReadAccTempGyro();
 
@@ -458,7 +490,7 @@ void update_gyro(void)
   * @param None
   * @retval None
   */
-void kalman_setup(void)
+static void kalman_setup(void)
 {
     p_i2c_mpu6050->mpu6050_GetGyroDataFilt(gyroData);
     p_i2c_mpu6050->mpu6050_GetAccDataFilt(accData);
@@ -480,7 +512,7 @@ void kalman_setup(void)
   * @param None
   * @retval None
   */
-void kalman_loop(timeDelta_t dT)
+static void kalman_loop(timeDelta_t dT)
 {
     p_i2c_mpu6050->mpu6050_GetGyroDataFilt(gyroData);
     p_i2c_mpu6050->mpu6050_GetAccDataFilt(accData);
@@ -527,7 +559,7 @@ void kalman_loop(timeDelta_t dT)
   * @param None
   * @retval None
   */
-void motors_arm(void)
+static void motors_arm(void)
 {
     for (uint32_t i = 0;  i < 1500; i++)
     {
@@ -542,7 +574,7 @@ void motors_arm(void)
   * @param None
   * @retval None
   */
-void motors_disarm(void)
+static void motors_disarm(void)
 {
     motorLeft.SendCommand(DSHOT_CMD_MOTOR_STOP, false);
     motorRight.SendCommand(DSHOT_CMD_MOTOR_STOP, false);
@@ -566,4 +598,12 @@ void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     power.HandleADC();
+}
+
+static void StartStop_Key_Handler(key_state_e state)
+{
+    if (state == PRESSED)
+    {
+        f_start = (!f_start) ? true : false;
+    }
 }
