@@ -17,6 +17,7 @@
 #include "Dshot.h"
 #include "Power.h"
 #include "Key.h"
+#include "PID.h"
 
 using namespace std;
 
@@ -53,8 +54,8 @@ timeDelta_t previousTimeUs = 0;
 Dshot motorLeft(&htim3, TIM_CHANNEL_3);
 Dshot motorRight(&htim3, TIM_CHANNEL_4);
 
-uint16_t throttle_right = 300;
-uint16_t throttle_left = 300;
+uint16_t throttle_right = 100;//650;
+uint16_t throttle_left = 100;//650;
 
 bool f_need_arm = true;
 #define ARM_PERIOD_US  (2500 * 1000)
@@ -70,6 +71,8 @@ Power power(&hadc1);
 Key start_stop_key;
 static void StartStop_Key_Handler(key_state_e);
 bool f_start = false;
+
+PID pid;
 
 static void update_lcd_display(void);
 static void update_gyro(void);
@@ -163,8 +166,9 @@ void initialization(void)
     HAL_UART_Receive_IT(&huart2, &rxByte, 1);
     taskQueue.taskEnable(TASK_DEBUG);
 #endif
+    taskQueue.taskEnable(TASK_KEY);
 
-    start_stop_key.Key_Init(GPIOA  , GPIO_PIN_0  , LO_LEVEL, &StartStop_Key_Handler);
+    start_stop_key.Key_Init(GPIOA, GPIO_PIN_0, LO_LEVEL, &StartStop_Key_Handler);
 
     p_i2c_display->ssd1306_Init();
 
@@ -172,7 +176,6 @@ void initialization(void)
 
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
-
 }
 
 /**
@@ -248,8 +251,6 @@ static void taskPID(timeUs_t currentTimeUs)
 
     if(f_need_arm)
     { 
-        //motorLeft.SendThrottle(0, false);
-        //motorRight.SendThrottle(0, false);
         arm_delay_us += dT;
         if (arm_delay_us >= ARM_PERIOD_US)
         {
@@ -600,6 +601,11 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     power.HandleADC();
 }
 
+/**
+  * @brief 
+  * @param None
+  * @retval None
+  */
 static void StartStop_Key_Handler(key_state_e state)
 {
     if (state == PRESSED)

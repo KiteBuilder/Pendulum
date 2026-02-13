@@ -67,7 +67,7 @@ class Power
     float convertToAmp(float val);
     float adcToVoltage(float val);
 
-   public:
+public:
     void StartADC(timeUs_t currentTimeUs);
     void HandleADC(void);
 

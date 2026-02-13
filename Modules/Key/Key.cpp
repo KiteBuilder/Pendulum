@@ -24,9 +24,9 @@ void Key::Key_Init(GPIO_TypeDef* p_gpio, uint16_t pin, key_active_level_e level,
     tremble_cnt = 0;
     guard_cnt = 0;
     gpio =  p_gpio;
-    pin =  pin;
-    level = level;
-    p_handler = p_handler;
+    this->pin =  pin;
+    this->level = level;
+    this->p_handler = p_handler;
 
     GPIO_InitStruct.Pin = pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
