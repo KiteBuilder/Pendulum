@@ -18,6 +18,7 @@
 #include "Power.h"
 #include "Key.h"
 #include "PID.h"
+#include "mixer.h"
 
 using namespace std;
 
@@ -48,14 +49,13 @@ float accData[XYZ_AXIS_COUNT] = {0.0f, 0.0f, 0.0f};
 
 Kalman rollKalman, pitchKalman;
 float rollAngle = 0.0f, pitchAngle = 0.0f;
-float gyro_rollAngle = 0.0f, gyro_pitchAngle = 0.0f;
 timeDelta_t previousTimeUs = 0;
 
 Dshot motorLeft(&htim3, TIM_CHANNEL_3);
 Dshot motorRight(&htim3, TIM_CHANNEL_4);
 
-uint16_t throttle_right = 100;//650;
-uint16_t throttle_left = 100;//650;
+uint16_t throttle_right = MID_THROAT;
+uint16_t throttle_left = MID_THROAT;
 
 bool f_need_arm = true;
 #define ARM_PERIOD_US  (2500 * 1000)
@@ -73,6 +73,7 @@ static void StartStop_Key_Handler(key_state_e);
 bool f_start = false;
 
 PID pid;
+Mixer mixer;
 
 static void update_lcd_display(void);
 static void update_gyro(void);
@@ -89,6 +90,7 @@ static void taskDISPLAY(timeUs_t);
 static void taskPOWER(timeUs_t);
 static void taskDEBUG(timeUs_t);
 static void taskKEY(timeUs_t);
+
 
 //Task array, consists of all scheduled tasks
 task_t tasks[TASK_COUNT] = {
@@ -176,6 +178,9 @@ void initialization(void)
 
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
+
+    pid.Initialize(PID_P, PID_I, PID_D, PID_OUT_MIN, PID_OUT_MAX);
+    mixer.Initialize(PID_OUT_MIN, PID_OUT_MAX, MIN_THROAT, MAX_THROAT);
 }
 
 /**
@@ -257,11 +262,15 @@ static void taskPID(timeUs_t currentTimeUs)
             f_need_arm = false;
             arm_delay_us = 0;
         }
-
     }
     else
     {
-        //TODO 
+        float pid_out = pid.Compute(SET_POINT, rollAngle, US2S(dT));
+        uint16_t motor_out = mixer.Compute(pid_out);
+
+        throttle_left = MID_THROAT + motor_out;
+        throttle_right = MID_THROAT - motor_out;
+
         if (f_start)
         {
             motorLeft.SendThrottle(throttle_left, false);
@@ -339,10 +348,7 @@ static void taskDEBUG(timeUs_t currentTimeUs)
 
         if (rxByte == 'R')
         {
-            //dev.energy().lifeCycles;
-            //dev.energy().cBatMod -= fabs(dev.energy().cBat);
-            //dev.energy().cBat = 0;
-            //dev.energy().eBat = 0;
+            //TODO
         }
     }
 
@@ -351,9 +357,9 @@ static void taskDEBUG(timeUs_t currentTimeUs)
     debugPack[2].flt = power.GetVBat();
     debugPack[3].flt = power.GetVBatFilt();
     debugPack[4].flt = power.GetEBat();
-    debugPack[5].flt = 0;
-    debugPack[6].flt = 0;
-    debugPack[7].flt = 0;
+    debugPack[5].flt = SET_POINT;
+    debugPack[6].flt = rollAngle;
+    debugPack[7].flt = pid.Get_Error();
     debugPack[8].flt = 0;
 
     uint32_t n = 0;
@@ -502,9 +508,6 @@ static void kalman_setup(void)
     rollKalman.setAngle(roll); // Set starting angle
     pitchKalman.setAngle(pitch);
 
-    gyro_rollAngle = roll;
-    gyro_pitchAngle = pitch;
-
     previousTimeUs = micros();
 }
 
@@ -526,7 +529,6 @@ static void kalman_loop(timeDelta_t dT)
     {
         rollKalman.setAngle(roll);
         rollAngle = roll;
-        gyro_rollAngle = roll;
     } 
     else
     {
@@ -539,20 +541,6 @@ static void kalman_loop(timeDelta_t dT)
     }
 
     pitchAngle = pitchKalman.getAngle(pitch, gyroData[Y], US2S(dT));    
-
-    gyro_rollAngle += gyroData[X] * US2S(dT);
-    gyro_pitchAngle += gyroData[Y] * US2S(dT);
-
-    // Reset the gyro angle when it has drifted too much
-    if (gyro_rollAngle < -180 || gyro_rollAngle > 180)
-    {
-        gyro_rollAngle = rollAngle;
-    }
-
-    if (gyro_pitchAngle < -180 || gyro_pitchAngle > 180)
-    {
-        gyro_pitchAngle = pitchAngle;    
-    }
 }
 
 /**

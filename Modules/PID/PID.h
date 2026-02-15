@@ -16,6 +16,11 @@ public:
 
     void Initialize(float Kp, float Ki, float Kd, float out_min, float out_max);
     float Compute(float setpoint, float measured, float dT);
+    
+    float Get_Error()
+    {
+        return prev_error;
+    }
 
     PID() = default;
     ~PID() = default;

@@ -73,7 +73,8 @@ Modules/Filters/Filters.cpp \
 Modules/Time/times.cpp \
 Modules/Power/Power.cpp \
 Modules/Key/Key.cpp \
-Modules/PID/PID.cpp
+Modules/PID/PID.cpp \
+Code/mixer.cpp
 
 # ASM sources
 ASM_SOURCES =  \
