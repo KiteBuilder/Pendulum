@@ -51,11 +51,11 @@ Kalman rollKalman, pitchKalman;
 float rollAngle = 0.0f, pitchAngle = 0.0f;
 timeDelta_t previousTimeUs = 0;
 
-Dshot motorLeft(&htim3, TIM_CHANNEL_3);
-Dshot motorRight(&htim3, TIM_CHANNEL_4);
+Dshot motorLeft(&htim3, TIM_CHANNEL_4);
+Dshot motorRight(&htim3, TIM_CHANNEL_3);
 
-uint16_t throttle_right = MID_THROAT;
-uint16_t throttle_left = MID_THROAT;
+uint16_t throttle_right = 0;
+uint16_t throttle_left = 0;
 
 bool f_need_arm = true;
 #define ARM_PERIOD_US  (2500 * 1000)
@@ -80,8 +80,10 @@ static void update_gyro(void);
 static void kalman_setup(void);
 static void kalman_loop(timeDelta_t dT);
 
+#if 0
 static void motors_arm(void);
 static void motors_disarm(void);
+#endif
 
 static void taskSTROBE(timeUs_t);
 static void taskGYRO(timeUs_t);
@@ -179,8 +181,8 @@ void initialization(void)
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
 
-    pid.Initialize(PID_P, PID_I, PID_D, PID_OUT_MIN, PID_OUT_MAX);
-    mixer.Initialize(PID_OUT_MIN, PID_OUT_MAX, MIN_THROAT, MAX_THROAT);
+    pid.Initialize(PID_P, PID_I, PID_D, PIDSUM_MAX);
+    mixer.Initialize(0, PIDSUM_MAX, DSHOT_MIN, DSHOT_MAX);
 }
 
 /**
@@ -265,11 +267,8 @@ static void taskPID(timeUs_t currentTimeUs)
     }
     else
     {
-        float pid_out = pid.Compute(SET_POINT, rollAngle, US2S(dT));
-        uint16_t motor_out = mixer.Compute(pid_out);
-
-        throttle_left = MID_THROAT + motor_out;
-        throttle_right = MID_THROAT - motor_out;
+        float pidsum = pid.Compute(SET_POINT, rollAngle, US2S(dT));
+        mixer.Compute(pidsum, throttle_left, throttle_right);
 
         if (f_start)
         {
@@ -312,10 +311,10 @@ static void taskPOWER(timeUs_t currentTimeUs)
 #define ETX 0x03
 #define ID 0x01
 
-#define DEBUG_PACK_SIZE 64
+#define DEBUG_PACK_SIZE 128
 uint8_t debugBuff[DEBUG_PACK_SIZE];
 
-#define PACK_SIZE 8
+#define PACK_SIZE 16
 
 #pragma pack(push, 1)
 typedef union
@@ -353,14 +352,21 @@ static void taskDEBUG(timeUs_t currentTimeUs)
     }
 
     debugPack[0].flt = power.GetIBat();
-    debugPack[1].flt = power.GetIBatFilt();
-    debugPack[2].flt = power.GetVBat();
-    debugPack[3].flt = power.GetVBatFilt();
-    debugPack[4].flt = power.GetEBat();
-    debugPack[5].flt = SET_POINT;
-    debugPack[6].flt = rollAngle;
-    debugPack[7].flt = pid.Get_Error();
-    debugPack[8].flt = 0;
+    debugPack[1].flt = power.GetVBat();
+    debugPack[2].flt = power.GetEBat();
+    debugPack[3].flt = SET_POINT;
+    debugPack[4].flt = rollAngle;
+    debugPack[5].flt = pid.Get_Error();
+    debugPack[6].flt = pid.Get_P();
+    debugPack[7].flt = pid.Get_I();
+    debugPack[8].flt = pid.Get_D();
+    debugPack[9].flt = throttle_left * 1.0f;
+    debugPack[10].flt = throttle_right * 1.0f;
+    debugPack[11].flt = 0;
+    debugPack[12].flt = 0;
+    debugPack[13].flt = 0;
+    debugPack[14].flt = 0;
+    debugPack[15].flt = 0;
 
     uint32_t n = 0;
     debugBuff[n++] = DLE;
@@ -450,17 +456,34 @@ static void update_lcd_display(void)
 
     if (!p_i2c_mpu6050->mpu6050_IsCalibrate())
     {
-        p_i2c_display->ssd1306_SetCursor(2, 25);
-        sprintf(str_buff, "R=%6.1f P=%6.1f", rollAngle, pitchAngle);
-        p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
+        if (!f_start)
+        {
+            p_i2c_display->ssd1306_SetCursor(2, 25);
+            sprintf(str_buff, "R=%6.1f P=%6.1f", rollAngle, pitchAngle);
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
-        p_i2c_display->ssd1306_SetCursor(2, 40);
-        sprintf(str_buff, "V=%4.1f I=%4.1f", power.GetVBat(), power.GetIBat());
-        p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
+            p_i2c_display->ssd1306_SetCursor(2, 40);
+            sprintf(str_buff, "V=%4.1f I=%4.1f", power.GetVBat(), power.GetIBat());
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
-        p_i2c_display->ssd1306_SetCursor(2, 55);
-        sprintf(str_buff, "E=%6.1fmAh", power.GetEBat());
-        p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);        
+            p_i2c_display->ssd1306_SetCursor(2, 55);
+            sprintf(str_buff, "E=%6.1fmAh", power.GetEBat());
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
+        }
+        else
+        {
+            p_i2c_display->ssd1306_SetCursor(2, 25);
+            sprintf(str_buff, "R=%6.1f", rollAngle);
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
+
+            p_i2c_display->ssd1306_SetCursor(2, 40);
+            sprintf(str_buff, "P=%8.3f", pid.Get_P());
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
+
+            p_i2c_display->ssd1306_SetCursor(2, 55);
+            sprintf(str_buff, "D=%8.3f", pid.Get_D());
+            p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);            
+        }
     }
     else
     {
@@ -543,6 +566,7 @@ static void kalman_loop(timeDelta_t dT)
     pitchAngle = pitchKalman.getAngle(pitch, gyroData[Y], US2S(dT));    
 }
 
+#if 0
 /**
   * @brief Motors arming process
   * @param None
@@ -568,6 +592,7 @@ static void motors_disarm(void)
     motorLeft.SendCommand(DSHOT_CMD_MOTOR_STOP, false);
     motorRight.SendCommand(DSHOT_CMD_MOTOR_STOP, false);
 }
+#endif
 
 /**
   * @brief 

@@ -13,19 +13,17 @@ void exec(void);
 #define DEBUG_ENABLED
 
 #define SET_POINT  (0.0f) //in Grad
-#define MAX_ERROR  (90.0f) //in Grad
 
-#define PID_P      (12.0f) // 0 - 30
-#define PID_I      (3.0f)
-#define PID_D      (0.8f)
+#define PID_P   (9.0f)
+#define PID_I   (0.0f)
+#define PID_D   (0.8f)
 
-#define MAX_PID_P       (30.0f)
-#define PID_OUT_MIN    (0.0f)
-#define PID_OUT_MAX    (MAX_ERROR * MAX_PID_P)
-
-#define MIN_THROAT  800
-#define MID_THROAT  1000
-#define MAX_THROAT  1600
+#define MAX_PID_P       (10.0f)
+#define MAX_ERROR       (90.0f) //in Grad
+#define PIDSUM_MAX     (MAX_ERROR * MAX_PID_P)
+ 
+#define DSHOT_MIN  1100
+#define DSHOT_MAX  1700
 
 #ifdef __cplusplus
 }

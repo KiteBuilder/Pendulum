@@ -1,19 +1,19 @@
 #include <cstdint>
 #include "PID.h"
 
-void PID::Initialize(float Kp, float Ki, float Kd, float out_min, float out_max)
+void PID::Initialize(float Kp, float Ki, float Kd, float out_max)
 {
     this->Kp = Kp;
     this->Ki = Ki;
     this->Kd = Kd;
 
-    this->out_min = out_min;
+    this->out_min = -out_max;
     this->out_max = out_max;
 }
 
 float PID::Compute(float setpoint, float measured, float dT)
 {
-    float P, I, D, output;
+    float output;
 
     //calculate error
     float error = setpoint - measured;
