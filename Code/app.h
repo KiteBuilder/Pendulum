@@ -15,7 +15,7 @@ void exec(void);
 #define SET_POINT  (0.0f) //in Grad
 
 #define PID_P   (9.0f)
-#define PID_I   (0.0f)
+#define PID_I   (2.0f)
 #define PID_D   (0.8f)
 
 #define MAX_PID_P       (10.0f)

@@ -455,7 +455,7 @@ static void update_lcd_display(void)
     p_i2c_display->ssd1306_SetCursor(5, 0);
     data[0] = (uint32_t)(tempC * 10);
     //sprintf(str_buff, "tC = %4.1f", tempC);
-    sprintf(str_buff, "tC = %4lu.%1lu", data[0] / 10, data[0] % 10);
+    sprintf(str_buff, "tC = %2lu.%1lu", data[0] / 10, data[0] % 10);
     p_i2c_display->ssd1306_WriteString(str_buff, Font_11x18, White);
 
     if (!p_i2c_mpu6050->mpu6050_IsCalibrate())
@@ -468,20 +468,20 @@ static void update_lcd_display(void)
             data[1] = (uint32_t)(fabs(pitchAngle) * 10);
             sign[1] = (pitchAngle < 0.0f) ? '-' : ' ';
             //sprintf(str_buff, "R=%6.1f P=%6.1f", rollAngle, pitchAngle);
-            sprintf(str_buff, "R=%c%6lu.%1lu P=%c%6lu.%1lu", sign[0], data[0] / 10, data[0] % 10, sign[1], data[1] / 10, data[1] % 10); 
+            sprintf(str_buff, "R=%c%3lu.%1lu P=%c%3lu.%1lu", sign[0], data[0] / 10, data[0] % 10, sign[1], data[1] / 10, data[1] % 10); 
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
             p_i2c_display->ssd1306_SetCursor(2, 40);
             data[0] = (uint32_t)(power.GetVBat() * 10);
             data[1] = (uint32_t)(power.GetIBat() * 10);
             //sprintf(str_buff, "V=%4.1f I=%4.1f", power.GetVBat(), power.GetIBat());
-            sprintf(str_buff, "V=%4lu.%1lu I=%4lu.%1lu", data[0] / 10, data[0] % 10, data[1] / 10, data[1] % 10);
+            sprintf(str_buff, "V=%2lu.%1lu I=%2lu.%1lu", data[0] / 10, data[0] % 10, data[1] / 10, data[1] % 10);
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
             p_i2c_display->ssd1306_SetCursor(2, 55);
             data[0] = (uint32_t)(power.GetEBat() * 10);
             //sprintf(str_buff, "E=%6.1fmAh", power.GetEBat());
-            sprintf(str_buff, "E=%6lu.%1lu", data[0] / 10, data[0] % 10);
+            sprintf(str_buff, "E=%4lu.%1lu", data[0] / 10, data[0] % 10);
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
         }
         else
@@ -490,21 +490,21 @@ static void update_lcd_display(void)
             data[0] = (uint32_t)(fabs(rollAngle) * 10);
             sign[0] = (rollAngle < 0.0f) ? '-' : ' ';
             //sprintf(str_buff, "R=%6.1f", rollAngle);
-            sprintf(str_buff, "R=%c%6lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
+            sprintf(str_buff, "R=%c%3lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
             p_i2c_display->ssd1306_SetCursor(2, 40);
             data[0] = (uint32_t)(fabs(pid.Get_P()) * 10);
             sign[0] = (pid.Get_P() < 0.0f) ? '-' : ' ';            
             //sprintf(str_buff, "P=%8.3f", pid.Get_P());
-            sprintf(str_buff, "P=%c%6lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
+            sprintf(str_buff, "P=%c%4lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
 
             p_i2c_display->ssd1306_SetCursor(2, 55);
             data[0] = (uint32_t)(fabs(pid.Get_D()) * 10);
             sign[0] = (pid.Get_D() < 0.0f) ? '-' : ' ';
             //sprintf(str_buff, "D=%8.3f", pid.Get_D());
-            sprintf(str_buff, "D=%c%6lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
+            sprintf(str_buff, "D=%c%4lu.%1lu", sign[0], data[0] / 10, data[0] % 10);
             p_i2c_display->ssd1306_WriteString(str_buff, Font_6x8, White);
         }
     }

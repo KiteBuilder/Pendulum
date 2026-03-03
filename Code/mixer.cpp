@@ -20,12 +20,12 @@ void Mixer::Compute(float pidsum, uint16_t &throttle_left, uint16_t &throttle_ri
 
     if (pidsum > 0)
     {
-        throttle_left = motor_min - motor_out * 2;
+        throttle_left = motor_min - motor_out * 3;
         throttle_right = motor_min + motor_out;
     }
     else
     {
         throttle_left = motor_min + motor_out;
-        throttle_right = motor_min - motor_out * 2;
+        throttle_right = motor_min - motor_out * 3;
     }
 }
