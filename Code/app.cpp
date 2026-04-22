@@ -181,7 +181,7 @@ void initialization(void)
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
 
-    pid.Initialize(PID_P, PID_I, PID_D, PIDSUM_MAX);
+    pid.Initialize(PID_P, PID_I, PID_D, PID_LOOP_HZ, PIDSUM_MAX);
     mixer.Initialize(0, PIDSUM_MAX, DSHOT_MIN, DSHOT_MAX);
 }
 
