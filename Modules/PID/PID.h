@@ -8,6 +8,7 @@ class PID
     #define DTERM_LPF_FREQ    60 //Hz
     #define DTERM_MIN        -300.0f
     #define DTERM_MAX         300.0f
+    #define PID_GYRO_RATE_BUF_LENGTH 5
 
     float Kp = 0.0f;
     float Ki = 0.0f;
@@ -23,6 +24,10 @@ class PID
     float prev_error = 0.0f;
 
     PT1Filter DTermLPFFilter;
+    
+    FirFilter ErrorFirFilter;
+    float gyroRateBuf[PID_GYRO_RATE_BUF_LENGTH];
+    float dtermCoeffs[PID_GYRO_RATE_BUF_LENGTH];
 
     float constrainf(float amt, float low, float high)
     {

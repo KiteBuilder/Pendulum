@@ -13,6 +13,15 @@ void PID::Initialize(float Kp, float Ki, float Kd, uint16_t desiredRateHz, float
     //initialize DTerm LPF filter
     float loopTime_sec = 1.0f / (float)desiredRateHz;
     DTermLPFFilter.FilterInit(DTERM_LPF_FREQ, loopTime_sec);
+
+    //simple d(t) - d(t-1) differentiator 
+    dtermCoeffs[0] = 1.0f;
+    dtermCoeffs[1] = -1.0f;
+    dtermCoeffs[2] = 0.0f;
+    dtermCoeffs[3] = 0.0f;
+    dtermCoeffs[4] = 0.0f;
+
+    ErrorFirFilter.firFilterInit(gyroRateBuf, PID_GYRO_RATE_BUF_LENGTH, dtermCoeffs);
 }
 
 float PID::Compute(float setpoint, float measured, float dT)
@@ -30,14 +39,20 @@ float PID::Compute(float setpoint, float measured, float dT)
     I = Ki * i_sum;
 
     //Derivative term
+    float dterm_error = error;
+
+    ErrorFirFilter.firFilterUpdate(dterm_error);
+    dterm_error = ErrorFirFilter.firFilterApply();
+
     if (DTermLPFFilter.isFirstLoad())
     {
-        DTermLPFFilter.FilterSetVal(error);
+        DTermLPFFilter.FilterSetVal(dterm_error);
     }
-    float dterm_error = DTermLPFFilter.FilterApply(error);
-    D = Kd * ((dterm_error - prev_error) / dT);
+    dterm_error = DTermLPFFilter.FilterApply(dterm_error);
+
+    D = Kd * ((dterm_error /*- prev_error*/) / dT);
     D = constrainf(D, DTERM_MIN, DTERM_MAX);
-    prev_error =  dterm_error;
+    //prev_error = dterm_error;
 
     //Calculate output
     output = P + I + D;

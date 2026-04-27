@@ -21,9 +21,10 @@ void exec(void);
 #define MAX_PID_P       (10.0f)
 #define MAX_ERROR       (90.0f) //in Grad
 #define PIDSUM_MAX     (MAX_ERROR * MAX_PID_P)
- 
-#define DSHOT_MIN  1100
-#define DSHOT_MAX  1700
+
+#define DSHOT_MIN  300
+#define DSHOT_MID  950
+#define DSHOT_MAX  1600
 
 #ifdef __cplusplus
 }

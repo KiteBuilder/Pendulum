@@ -1,5 +1,6 @@
 #include "Filters.h"
 #include <math.h>
+#include <string.h>
 
 using namespace std;
 
@@ -117,4 +118,57 @@ float  PT1Filter::FilterApply(float input, float dT, float fcut)
 void PT1Filter::FilterSetVal(float val)
 {
     ft_state = val;
+}
+
+
+/**
+  * @brief Destructor
+  * @param None
+  * @retval None
+  */
+FirFilter::~FirFilter()
+{
+
+}
+
+/**
+  * @brief 
+  * @param 
+  * @retval None
+  */
+void FirFilter::firFilterInit(float *buf, uint8_t bufLength, const float *coeffs)
+{
+    this->buf = buf;
+    this->bufLength = bufLength;
+    this->coeffs = coeffs;
+    coeffsLength = bufLength;
+    memset(this->buf, 0, sizeof(float) * this->bufLength);
+}
+
+/**
+  * @brief 
+  * @param 
+  * @retval None
+  */
+void FirFilter::firFilterUpdate(float input)
+{
+    memmove(&buf[1], &buf[0], (bufLength - 1) * sizeof(float));
+    buf[0] = input;
+}
+
+/**
+  * @brief 
+  * @param 
+  * @retval None
+  */
+float FirFilter::firFilterApply()
+{
+    float ret = 0.0f;
+
+    for (int i = 0; i < coeffsLength; ++i) 
+    {
+        ret += coeffs[i] * buf[i];
+    }
+
+    return ret;
 }

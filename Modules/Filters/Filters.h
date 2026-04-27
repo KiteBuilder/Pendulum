@@ -2,6 +2,8 @@
 #ifndef FILTERS_H_
 #define FILTERS_H_
 
+#include <stdint.h>
+
 class PT1Filter {
 public:
     PT1Filter()
@@ -31,6 +33,27 @@ private:
     float ft_alpha = 0;
 
     float ComputeRC(const float f_cut);
+};
+
+
+class FirFilter{
+public:
+    FirFilter()
+    {
+
+    }
+
+    virtual ~FirFilter();
+
+    void firFilterInit(float *buf, uint8_t bufLength, const float *coeffs);
+    void firFilterUpdate(float input);
+    float firFilterApply();
+
+private:
+    float *buf;
+    const float *coeffs;
+    uint8_t bufLength;
+    uint8_t coeffsLength;
 };
 
 #endif /* FILTERS_H_ */
