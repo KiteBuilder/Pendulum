@@ -26,6 +26,17 @@ void exec(void);
 #define DSHOT_MID  950
 #define DSHOT_MAX  1600
 
+
+#pragma pack(push,1)
+struct config_t{	//write to flash
+    uint32_t id;
+    float pid_P;
+    float pid_I;
+    float pid_D;
+};
+#pragma pack(pop)
+
+
 #ifdef __cplusplus
 }
 #endif

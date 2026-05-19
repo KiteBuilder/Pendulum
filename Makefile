@@ -74,7 +74,8 @@ Modules/Time/times.cpp \
 Modules/Power/Power.cpp \
 Modules/Key/Key.cpp \
 Modules/PID/PID.cpp \
-Code/mixer.cpp
+Code/mixer.cpp \
+Code/NOR_Flash.cpp
 
 # ASM sources
 ASM_SOURCES =  \

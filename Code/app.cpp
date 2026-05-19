@@ -19,6 +19,7 @@
 #include "Key.h"
 #include "PID.h"
 #include "mixer.h"
+#include "NOR_Flash.h"
 
 using namespace std;
 
@@ -74,6 +75,8 @@ bool f_start = false;
 
 PID pid;
 Mixer mixer;
+
+ConfigStore pid_config;
 
 static void update_lcd_display(void);
 static void update_gyro(void);
@@ -181,7 +184,18 @@ void initialization(void)
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
 
-    pid.Initialize(PID_P, PID_I, PID_D, PID_LOOP_HZ, PIDSUM_MAX);
+    config_t cfg = pid_config.getConfig();
+
+    if (cfg.id != pid_config.getID())
+    {
+        cfg.id = pid_config.getID();
+        cfg.pid_P = PID_P;
+        cfg.pid_I = PID_I;
+        cfg.pid_D = PID_D;
+        pid_config.setConfig(cfg);
+    }
+
+    pid.Initialize(cfg.pid_P, cfg.pid_I, cfg.pid_D, PID_LOOP_HZ, PIDSUM_MAX);
     mixer.Initialize(0, PIDSUM_MAX, DSHOT_MIN, DSHOT_MAX, DSHOT_MID);
 }
 
@@ -232,7 +246,7 @@ static void taskGYRO(timeUs_t currentTimeUs)
 {
     update_gyro();
 
-    if(f_need_arm)
+    if (f_need_arm)
     { 
         motorLeft.SendThrottle(0, false);
         motorRight.SendThrottle(0, false);
@@ -256,7 +270,7 @@ static void taskPID(timeUs_t currentTimeUs)
         kalman_loop(dT);
     }
 
-    if(f_need_arm)
+    if (f_need_arm)
     { 
         arm_delay_us += dT;
         if (arm_delay_us >= ARM_PERIOD_US)
