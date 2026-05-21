@@ -19,8 +19,10 @@ void exec(void);
 #define PID_D   (0.8f)
 
 #define MAX_PID_P       (10.0f)
+#define MAX_PID_I       (5.0f)
+#define MAX_PID_D       (3.0f)
 #define MAX_ERROR       (90.0f) //in Grad
-#define PIDSUM_MAX     (MAX_ERROR * MAX_PID_P)
+#define PIDSUM_MAX      (MAX_ERROR * MAX_PID_P)
 
 #define DSHOT_MIN  300
 #define DSHOT_MID  950
@@ -30,9 +32,9 @@ void exec(void);
 #pragma pack(push,1)
 struct config_t{	//write to flash
     uint32_t id;
-    float pid_P;
-    float pid_I;
-    float pid_D;
+    float Kp;
+    float Ki;
+    float Kd;
 };
 #pragma pack(pop)
 

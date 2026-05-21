@@ -64,6 +64,36 @@ public:
         return D;
     }
 
+    float Get_Kp()
+    {
+        return Kp;
+    }
+    
+    float Get_Ki()
+    {
+        return Ki;
+    }
+    
+    float Get_Kd()
+    {
+        return Kd;
+    }    
+
+    void Set_Kp(float val)
+    {
+        Kp = val;
+    }
+    
+    void Set_Ki(float val)
+    {
+        Ki = val;
+    }
+    
+    void Set_Kd(float val)
+    {
+        Kd = val;
+    }    
+
     PID() = default;
     ~PID() = default;
 };

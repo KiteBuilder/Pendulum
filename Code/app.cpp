@@ -76,7 +76,8 @@ bool f_start = false;
 PID pid;
 Mixer mixer;
 
-ConfigStore pid_config;
+ConfigStore cfg_store;
+config_t app_cfg = {0};
 
 static void update_lcd_display(void);
 static void update_gyro(void);
@@ -184,18 +185,18 @@ void initialization(void)
     motorLeft.Initialize(MOTOR_DSHOT300_HZ);
     motorRight.Initialize(MOTOR_DSHOT300_HZ);
 
-    config_t cfg = pid_config.getConfig();
+    app_cfg = cfg_store.getConfig();
 
-    if (cfg.id != pid_config.getID())
+    if (app_cfg.id != cfg_store.getID())
     {
-        cfg.id = pid_config.getID();
-        cfg.pid_P = PID_P;
-        cfg.pid_I = PID_I;
-        cfg.pid_D = PID_D;
-        pid_config.setConfig(cfg);
+        app_cfg.id = cfg_store.getID();
+        app_cfg.Kp = PID_P;
+        app_cfg.Ki = PID_I;
+        app_cfg.Kd = PID_D;
+        cfg_store.setConfig(app_cfg);
     }
 
-    pid.Initialize(cfg.pid_P, cfg.pid_I, cfg.pid_D, PID_LOOP_HZ, PIDSUM_MAX);
+    pid.Initialize(app_cfg.Kp, app_cfg.Ki, app_cfg.Kd, PID_LOOP_HZ, PIDSUM_MAX);
     mixer.Initialize(0, PIDSUM_MAX, DSHOT_MIN, DSHOT_MAX, DSHOT_MID);
 }
 
@@ -343,6 +344,18 @@ byte_float_t debugPack[PACK_SIZE];
 bool f_TxReady = true;
 bool f_RxReady = false;
 
+static inline void check_pid_range(float *pid_val, float max_val)
+{
+    if (*pid_val > max_val)
+    {
+        *pid_val = max_val;
+    }
+    else if(*pid_val < 0)
+    {
+        pid_val = 0;
+    }
+}
+
 /**
   * @brief Debug task sends selected amount of values by the serial interface
   *        and uses simple protocol that consists of next fields:
@@ -359,10 +372,43 @@ static void taskDEBUG(timeUs_t currentTimeUs)
     {
         f_RxReady = false;
 
-        if (rxByte == 'R')
+        switch (rxByte)
         {
-            //TODO
+            case ('P' + '+'):
+                app_cfg.Kp += 0.1;
+                break;
+
+            case ('P' + '-'):
+                app_cfg.Kp -= 0.1;
+                break;
+
+            case ('I' + '+'):
+                app_cfg.Ki += 0.1;
+                break;
+
+            case ('I' + '-'):
+                app_cfg.Ki -= 0.1;
+                break;
+
+            case ('D' + '+'):
+                app_cfg.Kd += 0.1;
+                break;
+
+            case ('D' + '-'):
+                app_cfg.Kd -= 0.1;
+                break;
+
+            case 'S':
+                cfg_store.setConfig(app_cfg);
+                break;
         }
+
+        check_pid_range( &app_cfg.Kp, MAX_PID_P);
+        check_pid_range( &app_cfg.Ki, MAX_PID_I);
+        check_pid_range( &app_cfg.Kd, MAX_PID_D);
+        pid.Set_Kp(app_cfg.Kp);
+        pid.Set_Ki(app_cfg.Ki);
+        pid.Set_Kd(app_cfg.Kd);
     }
 
     debugPack[0].flt = power.GetIBat();
@@ -376,9 +422,9 @@ static void taskDEBUG(timeUs_t currentTimeUs)
     debugPack[8].flt = pid.Get_D();
     debugPack[9].flt = throttle_left * 1.0f;
     debugPack[10].flt = throttle_right * 1.0f;
-    debugPack[11].flt = 0;
-    debugPack[12].flt = 0;
-    debugPack[13].flt = 0;
+    debugPack[11].flt = pid.Get_Kp();
+    debugPack[12].flt = pid.Get_Ki();
+    debugPack[13].flt = pid.Get_Kd();
     debugPack[14].flt = 0;
     debugPack[15].flt = 0;
 
