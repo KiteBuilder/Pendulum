@@ -35,6 +35,7 @@ struct config_t{	//write to flash
     float Kp;
     float Ki;
     float Kd;
+    uint32_t motor_mid;
 };
 #pragma pack(pop)
 

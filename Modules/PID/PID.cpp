@@ -52,7 +52,7 @@ float PID::Compute(float setpoint, float measured, float dT)
 
     D = Kd * ((dterm_error /*- prev_error*/) / dT);
     D = constrainf(D, DTERM_MIN, DTERM_MAX);
-    //prev_error = dterm_error;
+    prev_error = dterm_error;
 
     //Calculate output
     output = P + I + D;
