@@ -41,7 +41,7 @@ class PID
 
 public:
 
-    void Initialize(float Kp, float Ki, float Kd, uint16_t desiredRateHz, float out_max);
+    void Initialize(uint32_t Kp, uint32_t Ki, uint32_t Kd, uint16_t desiredRateHz, uint32_t out_max);
     float Compute(float setpoint, float measured, float dT);
 
     float Get_Error()
@@ -64,34 +64,19 @@ public:
         return D;
     }
 
-    float Get_Kp()
+    void Set_Kp(uint32_t val)
     {
-        return Kp;
+        Kp = (val * 1.0f) / 10;
     }
     
-    float Get_Ki()
+    void Set_Ki(uint32_t val)
     {
-        return Ki;
+        Ki = (val * 1.0f) / 10;
     }
     
-    float Get_Kd()
+    void Set_Kd(uint32_t val)
     {
-        return Kd;
-    }    
-
-    void Set_Kp(float val)
-    {
-        Kp = val;
-    }
-    
-    void Set_Ki(float val)
-    {
-        Ki = val;
-    }
-    
-    void Set_Kd(float val)
-    {
-        Kd = val;
+        Kd = (val * 1.0f) / 10;
     }    
 
     PID() = default;

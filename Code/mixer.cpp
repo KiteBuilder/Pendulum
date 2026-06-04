@@ -2,10 +2,10 @@
 #include <cmath>
 #include "mixer.h"
 
-void Mixer::Initialize(float pidsum_min, float pidsum_max, uint16_t dshot_min, uint16_t dshot_max, uint16_t dshot_mid)
+void Mixer::Initialize(uint32_t pidsum_min, uint32_t pidsum_max, uint16_t dshot_min, uint16_t dshot_max, uint16_t dshot_mid)
 {
-    pid_min = pidsum_min;
-    pid_max = pidsum_max;
+    pid_min = (pidsum_min * 1.0f) / 10;
+    pid_max = (pidsum_max * 1.0f) / 10;
     pid_range = pid_max - pid_min;
 
     motor_min = dshot_min;

@@ -345,7 +345,7 @@ byte_float_t debugPack[PACK_SIZE];
 bool f_TxReady = true;
 bool f_RxReady = false;
 
-static inline void check_pid_range(float *pid_val, float max_val)
+static inline void check_pid_range(uint32_t *pid_val, uint32_t max_val)
 {
     if (*pid_val > max_val)
     {
@@ -353,7 +353,7 @@ static inline void check_pid_range(float *pid_val, float max_val)
     }
     else if(*pid_val < 0)
     {
-        pid_val = 0;
+        *pid_val = 0;
     }
 }
 
@@ -368,7 +368,6 @@ static inline void check_pid_range(float *pid_val, float max_val)
 static void taskDEBUG(timeUs_t currentTimeUs)
 {
     UNUSED(currentTimeUs);
-    uint16_t motor_mid = mixer.Get_MotorMid();
 
     if (f_RxReady == true)
     {
@@ -377,27 +376,27 @@ static void taskDEBUG(timeUs_t currentTimeUs)
         switch (rxByte)
         {
             case ('P' + '+'):
-                app_cfg.Kp += 0.1f;
+                ++app_cfg.Kp;
                 break;
 
             case ('P' + '-'):
-                app_cfg.Kp -= 0.1f;
+                --app_cfg.Kp;
                 break;
 
             case ('I' + '+'):
-                app_cfg.Ki += 0.1f;
+                ++app_cfg.Ki;
                 break;
 
             case ('I' + '-'):
-                app_cfg.Ki -= 0.1f;
+                --app_cfg.Ki;
                 break;
 
             case ('D' + '+'):
-                app_cfg.Kd += 0.1f;
+                ++app_cfg.Kd;
                 break;
 
             case ('D' + '-'):
-                app_cfg.Kd -= 0.1f;
+                --app_cfg.Kd;
                 break;
 
             case 'S':
@@ -412,13 +411,13 @@ static void taskDEBUG(timeUs_t currentTimeUs)
                 break;
 
             case ('M' + '+'):
-                motor_mid += 10;
-                mixer.Set_MotorMid(motor_mid);
+                app_cfg.motor_mid += 10;
+                mixer.Set_MotorMid(app_cfg.motor_mid);
                 break;
 
             case ('M' + '-'):
-                motor_mid -=10;
-                mixer.Set_MotorMid(motor_mid);
+                app_cfg.motor_mid -= 10;
+                mixer.Set_MotorMid(app_cfg.motor_mid);
                 break;
         }
 
@@ -441,9 +440,9 @@ static void taskDEBUG(timeUs_t currentTimeUs)
     debugPack[8].flt = pid.Get_D();
     debugPack[9].flt = throttle_left * 1.0f;
     debugPack[10].flt = throttle_right * 1.0f;
-    debugPack[11].flt = pid.Get_Kp();
-    debugPack[12].flt = pid.Get_Ki();
-    debugPack[13].flt = pid.Get_Kd();
+    debugPack[11].flt = app_cfg.Kp * 1.0f;
+    debugPack[12].flt = app_cfg.Ki * 1.0f;
+    debugPack[13].flt = app_cfg.Kd * 1.0f;
     debugPack[14].flt = mixer.Get_MotorMid() * 1.0f;
     debugPack[15].flt = 0;
 

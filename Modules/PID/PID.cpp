@@ -1,14 +1,14 @@
 #include <cstdint>
 #include "PID.h"
 
-void PID::Initialize(float Kp, float Ki, float Kd, uint16_t desiredRateHz, float out_max)
+void PID::Initialize(uint32_t Kp, uint32_t Ki, uint32_t Kd, uint16_t desiredRateHz, uint32_t out_max)
 {
-    this->Kp = Kp;
-    this->Ki = Ki;
-    this->Kd = Kd;
+    this->Kp = (Kp * 1.0f) / 10;
+    this->Ki = (Ki * 1.0f) / 10;
+    this->Kd = (Kd * 1.0f) / 10;
 
-    this->out_min = -out_max;
-    this->out_max = out_max;
+    this->out_min = (out_max * (-1.0f)) / 10;
+    this->out_max = (out_max * 1.0f) / 10;
 
     //initialize DTerm LPF filter
     float loopTime_sec = 1.0f / (float)desiredRateHz;
@@ -52,7 +52,7 @@ float PID::Compute(float setpoint, float measured, float dT)
 
     D = Kd * ((dterm_error /*- prev_error*/) / dT);
     D = constrainf(D, DTERM_MIN, DTERM_MAX);
-    prev_error = dterm_error;
+    prev_error = error;//dterm_error;
 
     //Calculate output
     output = P + I + D;

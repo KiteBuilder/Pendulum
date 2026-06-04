@@ -14,7 +14,7 @@ class Mixer
 
 public:
 
-    void Initialize(float pid_min, float pid_max, uint16_t dshot_min, uint16_t dshot_max, uint16_t dshot_mid);
+    void Initialize(uint32_t pid_min, uint32_t pid_max, uint16_t dshot_min, uint16_t dshot_max, uint16_t dshot_mid);
     void Compute(float pidsum, uint16_t &throttle_left, uint16_t &throttle_right);
 
     uint16_t Get_MotorMid()
